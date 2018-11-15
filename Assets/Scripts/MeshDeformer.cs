@@ -4,8 +4,6 @@ using UnityEngine;
 
 public class MeshDeformer : MonoBehaviour
 {
-    public GameObject debugPoint;
-
     public float springForce = 20.0f; //Ressort
     public float damping = 1.0f; //Dureté du ressort
 
@@ -81,6 +79,10 @@ public class MeshDeformer : MonoBehaviour
     {
         Vector3 pointToVertex = deformedVertices[i] - point;
         float attenuatedForce = force / (1f + pointToVertex.sqrMagnitude);
+        float ratio = (deformedVertices[i]).sqrMagnitude / (originalVertices[i]).sqrMagnitude;
+        if (ratio > 1)
+            ratio = 1;
+        attenuatedForce *= ratio;
         float velocity = attenuatedForce * Time.deltaTime;
 
         vertexVelocities[i] += pointToVertex.normalized * velocity;
@@ -103,10 +105,10 @@ public class MeshDeformer : MonoBehaviour
 
     private void OnCollisionExit(Collision collision)
     {
+        Debug.Log("EXIT");
         bool isInList = watchInside.Contains(collision.gameObject);
         bool isIn = coll.bounds.Contains(collision.collider.gameObject.transform.position);
 
-        Debug.Log("EXIT");
         if (!isInList && isIn)
         {
             watchInside.Add(collision.gameObject);
@@ -121,6 +123,5 @@ public class MeshDeformer : MonoBehaviour
     {
         Vector3 point = collision.contacts[0].point - (collision.contacts[0].normal * 0.5f);
         ExecuteForce(point);
-        //Destroy(collision.collider.gameObject);
     }
 }

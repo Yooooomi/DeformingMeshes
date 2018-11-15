@@ -5,6 +5,7 @@ using UnityEngine;
 public class InputHandler : MonoBehaviour {
 
 	public Camera cam;
+    public GameObject bullet;
 
 	public float forceOffset = 1;
 	public float force = 10;
@@ -22,8 +23,19 @@ public class InputHandler : MonoBehaviour {
 		force = value;
 	}
 
-	// Update is called once per frame
-	void Update () {
+    private void Update()
+    {
+        if (!Input.GetMouseButtonDown(0)) return;
+        Ray inputRay = cam.ScreenPointToRay(Input.mousePosition);
+
+        GameObject bulletObj = Instantiate(bullet, inputRay.origin, Quaternion.identity);
+        Rigidbody rb = bulletObj.GetComponent<Rigidbody>();
+
+        rb.AddForce(inputRay.direction * 5.0f, ForceMode.Impulse);
+    }
+
+    // Update is called once per frame
+    void OldUpdate () {
 		Ray inputRay = cam.ScreenPointToRay(Input.mousePosition);
 		RaycastHit hit;
 

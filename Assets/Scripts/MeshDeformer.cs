@@ -7,7 +7,10 @@ public class MeshDeformer : MonoBehaviour
     public float springForce = 20.0f; //Ressort
     public float damping = 1.0f; //Dureté du ressort
 
+    public float strangerObjectForce = 3.0f;
+
     private Mesh deformedMesh;
+    private MeshCollider coll;
 
     private Vector3[] originalVertices;
     private Vector3[] deformedVertices;
@@ -25,6 +28,7 @@ public class MeshDeformer : MonoBehaviour
     void Start()
     {
         deformedMesh = GetComponent<MeshFilter>().mesh;
+        coll = GetComponent<MeshCollider>();
 
         originalVertices = deformedMesh.vertices;
         deformedVertices = new Vector3[originalVertices.Length];
@@ -51,6 +55,7 @@ public class MeshDeformer : MonoBehaviour
         }
         deformedMesh.vertices = deformedVertices;
         deformedMesh.RecalculateNormals();
+        coll.sharedMesh = deformedMesh;
     }
 
     public void AddDeform(Vector3 point, float force)
@@ -69,5 +74,10 @@ public class MeshDeformer : MonoBehaviour
         float velocity = attenuatedForce * Time.deltaTime;
 
         vertexVelocities[i] += pointToVertex.normalized * velocity;
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        AddDeform(collision.contacts[0].point, collision.relativeVelocity.sqrMagnitude * strangerObjectForce);
     }
 }

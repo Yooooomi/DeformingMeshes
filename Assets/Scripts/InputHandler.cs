@@ -25,9 +25,16 @@ public class InputHandler : MonoBehaviour {
 
     private void Update()
     {
+        if (Input.GetMouseButton(1)) OldUpdate();
         if (!Input.GetMouseButtonDown(0)) return;
-        Ray inputRay = cam.ScreenPointToRay(Input.mousePosition);
 
+        Ray inputRay = cam.ScreenPointToRay(Input.mousePosition);
+        RaycastHit hit;
+
+        if (Physics.Raycast(inputRay, out hit))
+        {
+            Debug.Log(hit.point);
+        }
         GameObject bulletObj = Instantiate(bullet, inputRay.origin, Quaternion.identity);
         Rigidbody rb = bulletObj.GetComponent<Rigidbody>();
 

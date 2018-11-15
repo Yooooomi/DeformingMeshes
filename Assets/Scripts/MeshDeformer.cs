@@ -18,6 +18,8 @@ public class MeshDeformer : MonoBehaviour
     private Vector3[] deformedVertices;
     private Vector3[] vertexVelocities;
 
+    private List<GameObject> watchInside = new List<GameObject>();
+
     public void ChangeSpring(float value) {
         springForce = value;
     }
@@ -43,6 +45,11 @@ public class MeshDeformer : MonoBehaviour
 
     void Update() {
         UpdateVertices();
+        foreach(var i in watchInside)
+        {
+            Vector3 point = i.transform.position;
+            ExecuteForce(point);
+        }
     }
 
     private void UpdateVertices() {
@@ -62,7 +69,7 @@ public class MeshDeformer : MonoBehaviour
 
     public void AddDeform(Vector3 point, float force)
     {
-        Instantiate(debugPoint, point, Quaternion.identity);
+        //Instantiate(debugPoint, point, Quaternion.identity);
         point = transform.InverseTransformPoint(point);
         for (int i = 0; i < deformedVertices.Length; i++)
         {
@@ -79,17 +86,41 @@ public class MeshDeformer : MonoBehaviour
         vertexVelocities[i] += pointToVertex.normalized * velocity;
     }
 
+    void ExecuteForce(Vector3 point)
+    {
+        AddDeform(point, 15.0f);
+    }
+
     private void OnCollisionEnter(Collision collision)
     {
-        OnCollisionStay(collision);
+        if (watchInside.Contains(collision.gameObject))
+        {
+            watchInside.Remove(collision.gameObject);
+        }
+        Vector3 point = collision.contacts[0].point - (collision.contacts[0].normal * 0.5f);
+        ExecuteForce(point);
+    }
+
+    private void OnCollisionExit(Collision collision)
+    {
+        bool isInList = watchInside.Contains(collision.gameObject);
+        bool isIn = coll.bounds.Contains(collision.collider.gameObject.transform.position);
+
+        Debug.Log("EXIT");
+        if (!isInList && isIn)
+        {
+            watchInside.Add(collision.gameObject);
+        }
+        else if (isInList && !isIn)
+        {
+            watchInside.Remove(collision.gameObject);
+        }
     }
 
     private void OnCollisionStay(Collision collision)
     {
-        Debug.Log(collision.contacts[0].point);
-        Debug.DrawLine(collision.contacts[0].point, collision.contacts[0].point + collision.contacts[0].normal * 0.5f);
         Vector3 point = collision.contacts[0].point - (collision.contacts[0].normal * 0.5f);
-        AddDeform(point, 15.0f);
+        ExecuteForce(point);
         //Destroy(collision.collider.gameObject);
     }
 }

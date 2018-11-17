@@ -12,13 +12,13 @@ public class MeshDeformer : MonoBehaviour
     public float strangerObjectForce = 3.0f;
 
     private Mesh deformedMesh;
-    private MeshCollider coll;
 
     private Vector3[] originalVertices;
     private Vector3[] deformedVertices;
     private Vector3[] vertexVelocities;
 
     private List<GameObject> watchInside = new List<GameObject>();
+    private List<BoxCollider> colliders;
 
     public void ChangeSpring(float value) {
         springForce = value;
@@ -32,7 +32,7 @@ public class MeshDeformer : MonoBehaviour
     void Start()
     {
         deformedMesh = GetComponent<MeshFilter>().mesh;
-        coll = GetComponent<MeshCollider>();
+        colliders = GetComponent<GenerateConvex>().existing;
 
         originalVertices = deformedMesh.vertices;
         deformedVertices = new Vector3[originalVertices.Length];
@@ -64,7 +64,10 @@ public class MeshDeformer : MonoBehaviour
         }
         deformedMesh.vertices = deformedVertices;
         deformedMesh.RecalculateNormals();
-        coll.sharedMesh = deformedMesh;
+        for(int i = 0; i < colliders.Count; i++)
+        {
+            colliders[i].center = deformedVertices[i];
+        }
     }
 
     public void AddDeform(Vector3 point, float force)
@@ -109,7 +112,7 @@ public class MeshDeformer : MonoBehaviour
     {
         Debug.Log("EXIT");
         bool isInList = watchInside.Contains(collision.gameObject);
-        bool isIn = coll.bounds.Contains(collision.collider.gameObject.transform.position);
+        bool isIn = false; //coll.bounds.Contains(collision.collider.gameObject.transform.position);
 
         if (!isInList && isIn)
         {

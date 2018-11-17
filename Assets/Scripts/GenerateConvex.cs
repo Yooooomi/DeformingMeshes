@@ -13,9 +13,6 @@ public class GenerateConvex : MonoBehaviour {
     {
         for (int i = 0; i < originalVertices.Count; i++)
         {
-            int before = (i == 0 ? (originalVertices.Count - 1) : i - 1);
-            int after = (i == originalVertices.Count - 1) ? 0 : (i + 1);
-
             Vector3 size = sizes[i];
             for (int j = 0; j < 3; j++)
             {

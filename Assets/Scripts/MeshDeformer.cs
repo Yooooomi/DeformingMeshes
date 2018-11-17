@@ -7,6 +7,8 @@ public class MeshDeformer : MonoBehaviour
     public float springForce = 20.0f; //Ressort
     public float damping = 1.0f; //Dureté du ressort
 
+    public float offsetForce = 0.5f;
+
     public float strangerObjectForce = 3.0f;
 
     private Mesh deformedMesh;
@@ -82,7 +84,7 @@ public class MeshDeformer : MonoBehaviour
         float ratio = (deformedVertices[i]).sqrMagnitude / (originalVertices[i]).sqrMagnitude;
         if (ratio > 1)
             ratio = 1;
-        attenuatedForce *= ratio;
+        //attenuatedForce *= ratio;
         float velocity = attenuatedForce * Time.deltaTime;
 
         vertexVelocities[i] += pointToVertex.normalized * velocity;
@@ -99,7 +101,7 @@ public class MeshDeformer : MonoBehaviour
         {
             watchInside.Remove(collision.gameObject);
         }
-        Vector3 point = collision.contacts[0].point - (collision.contacts[0].normal * 0.5f);
+        Vector3 point = collision.contacts[0].point - (collision.contacts[0].normal * offsetForce);
         ExecuteForce(point);
     }
 
@@ -121,7 +123,7 @@ public class MeshDeformer : MonoBehaviour
 
     private void OnCollisionStay(Collision collision)
     {
-        Vector3 point = collision.contacts[0].point - (collision.contacts[0].normal * 0.5f);
+        Vector3 point = collision.contacts[0].point - (collision.contacts[0].normal * offsetForce);
         ExecuteForce(point);
     }
 }

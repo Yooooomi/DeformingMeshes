@@ -17,6 +17,7 @@ public class MeshDeformer : MonoBehaviour
 
     private List<GameObject> watchInside = new List<GameObject>();
     private List<BoxCollider> colliders;
+    Vector3 tmp = Vector3.zero;
 
     public void ChangeSpring(float value) {
         springForce = value;
@@ -42,6 +43,7 @@ public class MeshDeformer : MonoBehaviour
     }
 
     void Update() {
+        Debug.Log(tmp);
         UpdateVertices();
         foreach(var i in watchInside)
         {
@@ -59,14 +61,43 @@ public class MeshDeformer : MonoBehaviour
         return ratio;
     }
 
+    private float computeDamping(Vector3 deformedVertice, Vector3 originalVertice)
+    {
+        float ratio = ((deformedVertice).sqrMagnitude / (originalVertice).sqrMagnitude) - 1;
+        ratio = Mathf.Abs(ratio) + 0.1f;
+        ratio *= damping;
+        return ratio;
+        //old  return force * (1 - damping * Time.deltaTime);
+    }
+
+    private bool isBeeingMoreDeformed(Vector3 deformedVetice, Vector3 originalVertice, Vector3 force)
+    {
+        float diff = originalVertice.magnitude - deformedVetice.magnitude;
+        if ((force.magnitude > 0 && diff > 0) || (force.magnitude < 0 && diff < 0))
+        {
+            return false;
+        }
+        else
+        {
+            return true;
+        }
+    }
+
     private void UpdateVertices() {
         for (int i = 0; i < deformedVertices.Length; i++) {
             Vector3 force = vertexVelocities[i];
             Vector3 displacement = deformedVertices[i] - originalVertices[i];
 
-            force *= getAttenuation(deformedVertices[i], originalVertices[i]);
+            if (isBeeingMoreDeformed(deformedVertices[i], originalVertices[i], force))
+            {
+                force *= getAttenuation(deformedVertices[i], originalVertices[i]);            
+            }
+            else
+            {
+                force *= computeDamping(deformedVertices[i], originalVertices[i]);
+            }
             force -= displacement * springForce * Time.deltaTime;
-            force *= 1 - damping * Time.deltaTime;
+            tmp = force;
             deformedVertices[i] += force * Time.deltaTime;
             vertexVelocities[i] = force;
         }
@@ -93,8 +124,8 @@ public class MeshDeformer : MonoBehaviour
         float attenuatedForce = force / (1f + pointToVertex.sqrMagnitude);
 
         float velocity = attenuatedForce * Time.deltaTime;
-
         vertexVelocities[i] += pointToVertex.normalized * velocity;
+
     }
 
     void ExecuteForce(Vector3 point)
@@ -112,7 +143,6 @@ public class MeshDeformer : MonoBehaviour
             force = collision.rigidbody.mass;
         }
         force *= collision.relativeVelocity.sqrMagnitude;
-        Debug.Log(collision.relativeVelocity.sqrMagnitude);
         AddDeform(point, force);
     }
 

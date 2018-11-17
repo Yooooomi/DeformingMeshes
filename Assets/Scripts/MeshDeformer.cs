@@ -9,8 +9,6 @@ public class MeshDeformer : MonoBehaviour
 
     public float offsetForce = 0.5f;
 
-    public float strangerObjectForce = 3.0f;
-
     private Mesh deformedMesh;
 
     private Vector3[] originalVertices;
@@ -52,6 +50,9 @@ public class MeshDeformer : MonoBehaviour
         }
     }
 
+    //ratio = Mathf.Exp(-4 * ratio * ratio);
+    //attenuatedForce *= ratio;
+
     private void UpdateVertices() {
         for (int i = 0; i < deformedVertices.Length; i++) {
             Vector3 force = vertexVelocities[i];
@@ -83,10 +84,8 @@ public class MeshDeformer : MonoBehaviour
     {
         Vector3 pointToVertex = deformedVertices[i] - point;
         float attenuatedForce = force / (1f + pointToVertex.sqrMagnitude);
-        float ratio = (deformedVertices[i]).sqrMagnitude / (originalVertices[i]).sqrMagnitude;
-        if (ratio > 1)
-            ratio = 1;
-        //attenuatedForce *= ratio;
+        float ratio = 1 - (deformedVertices[i]).sqrMagnitude / (originalVertices[i]).sqrMagnitude;
+
         float velocity = attenuatedForce * Time.deltaTime;
 
         vertexVelocities[i] += pointToVertex.normalized * velocity;
@@ -104,12 +103,16 @@ public class MeshDeformer : MonoBehaviour
             watchInside.Remove(collision.gameObject);
         }
         Vector3 point = collision.contacts[0].point - (collision.contacts[0].normal * offsetForce);
-        ExecuteForce(point);
+        float force = 1;
+        if (collision.rigidbody)
+        {
+            force = collision.rigidbody.mass;
+        }
+        AddDeform(point, collision.relativeVelocity.sqrMagnitude * force);
     }
 
     private void OnCollisionExit(Collision collision)
     {
-        Debug.Log("EXIT");
         bool isInList = watchInside.Contains(collision.gameObject);
         bool isIn = false; //coll.bounds.Contains(collision.collider.gameObject.transform.position);
 
@@ -126,6 +129,11 @@ public class MeshDeformer : MonoBehaviour
     private void OnCollisionStay(Collision collision)
     {
         Vector3 point = collision.contacts[0].point - (collision.contacts[0].normal * offsetForce);
-        AddDeform(point, collision.relativeVelocity.magnitude * collision.rigidbody.mass);
+        float force = 1;
+        if (collision.rigidbody)
+        {
+            force = collision.rigidbody.mass;
+        }
+        AddDeform(point, collision.relativeVelocity.sqrMagnitude * force);
     }
 }

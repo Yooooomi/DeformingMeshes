@@ -67,7 +67,6 @@ public class MeshDeformer : MonoBehaviour
 
     public void AddDeform(Vector3 point, float force)
     {
-        //Instantiate(debugPoint, point, Quaternion.identity);
         point = transform.InverseTransformPoint(point);
         for (int i = 0; i < deformedVertices.Length; i++)
         {
@@ -122,6 +121,6 @@ public class MeshDeformer : MonoBehaviour
     private void OnCollisionStay(Collision collision)
     {
         Vector3 point = collision.contacts[0].point - (collision.contacts[0].normal * 0.5f);
-        ExecuteForce(point);
+        AddDeform(point, collision.relativeVelocity.magnitude * collision.rigidbody.mass);
     }
 }

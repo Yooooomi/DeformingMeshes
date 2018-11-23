@@ -95,6 +95,5 @@ public class GenerateConvex : MonoBehaviour {
         originalVertices = new List<Vector3>(mesh.vertices);
         List<Vector3> sizes = SortVertices();
         GenerateEachColliders(sizes);
-        StartCoroutine(BouleDeNoel());
     }
 }

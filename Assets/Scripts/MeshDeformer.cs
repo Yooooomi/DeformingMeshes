@@ -15,9 +15,7 @@ public class MeshDeformer : MonoBehaviour
     private Vector3[] deformedVertices;
     private Vector3[] vertexVelocities;
 
-    private List<GameObject> watchInside = new List<GameObject>();
     private List<BoxCollider> colliders;
-    Vector3 tmp = Vector3.zero;
 
     public void ChangeSpring(float value) {
         springForce = value;
@@ -31,9 +29,9 @@ public class MeshDeformer : MonoBehaviour
     void Start()
     {
         deformedMesh = GetComponent<MeshFilter>().mesh;
-        colliders = GetComponent<GenerateConvex>().existing;
 
         originalVertices = deformedMesh.vertices;
+        colliders = GetComponent<GenerateConvex>().existing;
         deformedVertices = new Vector3[originalVertices.Length];
         for (int i = 0; i < originalVertices.Length; i++)
         {
@@ -43,22 +41,7 @@ public class MeshDeformer : MonoBehaviour
     }
 
     void Update() {
-        Debug.Log(tmp);
         UpdateVertices();
-        foreach(var i in watchInside)
-        {
-            Vector3 point = i.transform.position;
-            //ExecuteForce(point);
-        }
-    }
-
-
-    
-    private float getAttenuation(Vector3 deformedVertice, Vector3 originalVertice)
-    {
-        float ratio = 1 - (deformedVertice).sqrMagnitude / (originalVertice).sqrMagnitude;
-        ratio = Mathf.Exp(-4 * ratio * ratio);
-        return ratio;
     }
 
     private float computeDamping(Vector3 deformedVertice, Vector3 originalVertice)
@@ -83,7 +66,7 @@ public class MeshDeformer : MonoBehaviour
         }
     }
 
-    private void UpdateVertices() {
+    /*private void UpdateVertices() {
         for (int i = 0; i < deformedVertices.Length; i++) {
             Vector3 force = vertexVelocities[i];
             Vector3 displacement = deformedVertices[i] - originalVertices[i];
@@ -107,27 +90,69 @@ public class MeshDeformer : MonoBehaviour
         {
             colliders[i].center = deformedVertices[i];
         }
+    }*/
+
+    private void UpdateVertices()
+    {
+        for (int i = 0; i < deformedVertices.Length; i++)
+        {
+            Vector3 force = vertexVelocities[i];
+            Vector3 displacement = deformedVertices[i] - originalVertices[i];
+            force -= displacement * springForce * Time.deltaTime;
+            force *= 1 - damping * Time.deltaTime;
+            deformedVertices[i] += force * Time.deltaTime;
+            vertexVelocities[i] = force;
+        }
+        deformedMesh.vertices = deformedVertices;
+        deformedMesh.RecalculateNormals();
+        for (int i = 0; i < colliders.Count; i++)
+        {
+            colliders[i].center = deformedVertices[i];
+        }
     }
 
-    public void AddDeform(Vector3 point, float force)
+    private float clamp(float value, float max)
+    {
+        if (value > max) return max;
+        return value;
+    }
+
+    private float getAttenuation(Vector3 currentVertice, Vector3 plannedVertice, Vector3 originalVertice)
+    {
+        float deformAmount = (currentVertice - originalVertice).sqrMagnitude / (originalVertice).sqrMagnitude;
+        deformAmount = clamp(Mathf.Abs(deformAmount), 1);
+        float deformAmountPlanned = (plannedVertice - originalVertice).sqrMagnitude / (originalVertice).sqrMagnitude;
+        deformAmountPlanned = clamp(Mathf.Abs(deformAmountPlanned), 1);
+        float ratio = Mathf.Abs(deformAmountPlanned) * Mathf.Abs(1 - deformAmount);
+        return ratio;
+    }
+
+    private float getAttenuationOld(Vector3 deformedVertice, Vector3 originalVertice)
+    {
+        float deformAmount = (deformedVertice - originalVertice).sqrMagnitude / (originalVertice).sqrMagnitude;
+        float ratio = 1 - deformAmount;
+        ratio = Mathf.Exp(-4 * ratio * ratio);
+        return ratio;
+    }
+
+    void AddForceToVertex(int i, Vector3 point, Vector3 dir, float force)
+    {
+        Vector3 pointToVertex = deformedVertices[i] - point;
+        float tmpforce = getAttenuation(deformedVertices[i], deformedVertices[i] + dir * force * Time.deltaTime, originalVertices[i]) * originalVertices[i].sqrMagnitude;
+        float attenuatedForce = tmpforce / (1f + pointToVertex.sqrMagnitude);
+
+        float velocity = attenuatedForce * Time.deltaTime;
+        vertexVelocities[i] += dir * velocity;
+    }
+
+    public void AddDeform(Vector3 point, Vector3 dir, float force)
     {
         point = transform.InverseTransformPoint(point);
         for (int i = 0; i < deformedVertices.Length; i++)
         {
-            AddForceToVertex(i, point, force);
+            AddForceToVertex(i, point, dir, force);
         }
     }
-
-    void AddForceToVertex(int i, Vector3 point, float force)
-    {
-        Vector3 pointToVertex = deformedVertices[i] - point;
-        float attenuatedForce = force / (1f + pointToVertex.sqrMagnitude);
-
-        float velocity = attenuatedForce * Time.deltaTime;
-        vertexVelocities[i] += pointToVertex.normalized * velocity;
-
-    }
-
     void ExecuteForce(Vector3 point)
     {
         Debug.Log("Depractaed call to executeForce");
@@ -143,31 +168,13 @@ public class MeshDeformer : MonoBehaviour
             force = collision.rigidbody.mass;
         }
         force *= collision.relativeVelocity.sqrMagnitude;
-        AddDeform(point, force);
+        //Debug.DrawLine(point, point + collision.relativeVelocity, Color.red, 1.0f);
+        AddDeform(point, collision.relativeVelocity.normalized, force * collision.relativeVelocity.sqrMagnitude);
     }
 
     private void OnCollisionEnter(Collision collision)
     {
-        if (watchInside.Contains(collision.gameObject))
-        {
-            watchInside.Remove(collision.gameObject);
-        }
         handleCollision(collision);
-    }
-
-    private void OnCollisionExit(Collision collision)
-    {
-        bool isInList = watchInside.Contains(collision.gameObject);
-        bool isIn = false; //coll.bounds.Contains(collision.collider.gameObject.transform.position);
-
-        if (!isInList && isIn)
-        {
-            watchInside.Add(collision.gameObject);
-        }
-        else if (isInList && !isIn)
-        {
-            watchInside.Remove(collision.gameObject);
-        }
     }
 
     private void OnCollisionStay(Collision collision)

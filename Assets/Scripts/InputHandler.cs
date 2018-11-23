@@ -25,32 +25,13 @@ public class InputHandler : MonoBehaviour {
 
     private void Update()
     {
-        if (Input.GetMouseButton(1)) OldUpdate();
         if (!Input.GetMouseButtonDown(0)) return;
 
         Ray inputRay = cam.ScreenPointToRay(Input.mousePosition);
-        RaycastHit hit;
 
         GameObject bulletObj = Instantiate(bullet, inputRay.origin, Quaternion.identity);
         Rigidbody rb = bulletObj.GetComponent<Rigidbody>();
 
         rb.AddForce(inputRay.direction * 5.0f, ForceMode.Impulse);
     }
-
-    // Update is called once per frame
-    void OldUpdate () {
-		Ray inputRay = cam.ScreenPointToRay(Input.mousePosition);
-		RaycastHit hit;
-
-		if (Physics.Raycast(inputRay, out hit)) {
-			MeshDeformer md = hit.collider.gameObject.GetComponent<MeshDeformer>();
-
-			if (md) {
-				Vector3 point = hit.point;
-
-				point += hit.normal * forceOffset;
-				md.AddDeform(point, force);
-			}
-		}
-	}
 }

@@ -32,6 +32,6 @@ public class InputHandler : MonoBehaviour {
         GameObject bulletObj = Instantiate(bullet, inputRay.origin, Quaternion.identity);
         Rigidbody rb = bulletObj.GetComponent<Rigidbody>();
 
-        rb.AddForce(inputRay.direction * 5.0f, ForceMode.Impulse);
+        rb.AddForce(inputRay.direction * force, ForceMode.Impulse);
     }
 }

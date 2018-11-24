@@ -492,7 +492,7 @@ MonoBehaviour:
   cam: {fileID: 282840813}
   bullet: {fileID: 1731288563971302, guid: edbf4f447762af740a521e89783034d9, type: 2}
   forceOffset: 0.5
-  force: 15
+  force: 5
 --- !u!20 &282840813
 Camera:
   m_ObjectHideFlags: 0
@@ -584,21 +584,6 @@ Prefab:
     - target: {fileID: 4923758259620836, guid: edbf4f447762af740a521e89783034d9, type: 2}
       propertyPath: m_RootOrder
       value: 3
-      objectReference: {fileID: 0}
-    - target: {fileID: 54246121437582428, guid: edbf4f447762af740a521e89783034d9,
-        type: 2}
-      propertyPath: m_Constraints
-      value: 126
-      objectReference: {fileID: 0}
-    - target: {fileID: 135057500275583244, guid: edbf4f447762af740a521e89783034d9,
-        type: 2}
-      propertyPath: m_Enabled
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 135057500275583244, guid: edbf4f447762af740a521e89783034d9,
-        type: 2}
-      propertyPath: m_IsTrigger
-      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: edbf4f447762af740a521e89783034d9, type: 2}
@@ -1602,8 +1587,8 @@ Transform:
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1213811655}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.44, y: -1.12, z: 2.7}
-  m_LocalScale: {x: 1000, y: 0.1, z: 1000}
+  m_LocalPosition: {x: -0.44, y: -7, z: 2.7}
+  m_LocalScale: {x: 1000, y: 10, z: 1000}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 5
@@ -2115,7 +2100,7 @@ Rigidbody:
   m_UseGravity: 1
   m_IsKinematic: 0
   m_Interpolate: 0
-  m_Constraints: 14
+  m_Constraints: 0
   m_CollisionDetection: 0
 --- !u!114 &1420267948
 MonoBehaviour:

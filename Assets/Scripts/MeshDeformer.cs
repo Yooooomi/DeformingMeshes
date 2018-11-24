@@ -122,8 +122,16 @@ public class MeshDeformer : MonoBehaviour
         float deformAmount = (currentVertice - originalVertice).sqrMagnitude / (originalVertice).sqrMagnitude;
         deformAmount = clamp(Mathf.Abs(deformAmount), 1);
         float deformAmountPlanned = (plannedVertice - originalVertice).sqrMagnitude / (originalVertice).sqrMagnitude;
-        deformAmountPlanned = clamp(Mathf.Abs(deformAmountPlanned), 1);
-        float ratio = Mathf.Abs(deformAmountPlanned) * Mathf.Abs(1 - deformAmount);
+        float clampedDeformAmountPlanned = clamp(Mathf.Abs(deformAmountPlanned), 1);
+        float ratio = Mathf.Abs(clampedDeformAmountPlanned) * Mathf.Abs(1 - deformAmount);
+        if (ratio == 1)
+        {
+            //Debug.Log("Hey ratio = 1");
+        }
+        if (deformAmountPlanned > 1)
+        {
+            ratio = ratio / deformAmountPlanned;
+        }
         return ratio;
     }
 
@@ -138,11 +146,12 @@ public class MeshDeformer : MonoBehaviour
     void AddForceToVertex(int i, Vector3 point, Vector3 dir, float force)
     {
         Vector3 pointToVertex = deformedVertices[i] - point;
-        float tmpforce = getAttenuation(deformedVertices[i], deformedVertices[i] + dir * force * Time.deltaTime, originalVertices[i]) * originalVertices[i].sqrMagnitude;
-        float attenuatedForce = tmpforce / (1f + pointToVertex.sqrMagnitude);
+        float ratioAttenuation = getAttenuation(deformedVertices[i], deformedVertices[i] + dir * force, originalVertices[i]) * originalVertices[i].sqrMagnitude;
+        force *= ratioAttenuation;
+        //float attenuatedForce = force / (1f + pointToVertex.sqrMagnitude);
 
-        float velocity = attenuatedForce * Time.deltaTime;
-        vertexVelocities[i] += dir * velocity;
+        force *= /*attenuatedForce*/ force * Time.deltaTime;
+        vertexVelocities[i] += dir * force;
     }
 
     public void AddDeform(Vector3 point, Vector3 dir, float force)

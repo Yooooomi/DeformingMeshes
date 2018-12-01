@@ -122,7 +122,7 @@ public class MeshDeformer : MonoBehaviour
         return Vector3.Distance(v, Vector3.zero);
     }
 
-    private float getAttenuation(Vector3 currentVertice, Vector3 originalVertice, Vector3 dir, float force)
+    private float getAttenuation(Vector3 currentVertice, Vector3 currentVerticeVelocity, Vector3 originalVertice, Vector3 dir, float force)
     {
         float deformAmount = dist(currentVertice - originalVertice) / dist(originalVertice);
         deformAmount = clamp(Mathf.Abs(deformAmount), 1);
@@ -130,7 +130,7 @@ public class MeshDeformer : MonoBehaviour
         ratio = Mathf.Exp(-4 * ratio * ratio);
         //float deformAmountPlanned = (currentVertice + dir * force * ratio).sqrMagnitude / (originalVertice).sqrMagnitude;
         //float deformAmountPlanned = dist(((currentVertice + dir * force * ratio) - originalVertice) - (originalVertice)) / dist((originalVertice));    
-        float deformAmountPlanned = dist((currentVertice + dir * force * ratio) - originalVertice) / dist(originalVertice);    
+        float deformAmountPlanned = dist((currentVertice + currentVerticeVelocity + dir * force * Time.deltaTime * ratio) - originalVertice) / dist(originalVertice);
         if (deformAmountPlanned > 0.9f)
         {
             ratio = ratio / deformAmountPlanned;
@@ -138,22 +138,14 @@ public class MeshDeformer : MonoBehaviour
         return ratio;
     }
 
-    private float getAttenuationOld(Vector3 deformedVertice, Vector3 originalVertice)
-    {
-        float deformAmount = (deformedVertice - originalVertice).sqrMagnitude / (originalVertice).sqrMagnitude;
-        float ratio = 1 - deformAmount;
-        ratio = Mathf.Exp(-4 * ratio * ratio);
-        return ratio;
-    }
-
     void AddForceToVertex(int i, Vector3 point, Vector3 dir, float force)
     {
         Vector3 pointToVertex = deformedVertices[i] - point;
-        float ratioAttenuation = getAttenuation(deformedVertices[i], originalVertices[i], dir, force);
+        float ratioAttenuation = getAttenuation(deformedVertices[i], vertexVelocities[i], originalVertices[i], dir, force);
         force *= ratioAttenuation;
         force = force / (1f + pointToVertex.sqrMagnitude); // force des cotes
 
-        force *= Time.deltaTime * 10;
+        force *= Time.deltaTime;
         vertexVelocities[i] += dir * force;
     }
 
@@ -181,7 +173,10 @@ public class MeshDeformer : MonoBehaviour
         }
         force *= collision.relativeVelocity.sqrMagnitude;
         //Debug.DrawLine(point, point + collision.relativeVelocity, Color.red, 1.0f);
-        AddDeform(point, collision.relativeVelocity.normalized, force * collision.relativeVelocity.sqrMagnitude);
+        if (force == 0) force = 1000;
+        //Debug.Log(force);
+        //Debug.Log(collision.relativeVelocity.normalized);
+        AddDeform(point, collision.relativeVelocity.normalized, force);
     }
 
     private void OnCollisionEnter(Collision collision)
